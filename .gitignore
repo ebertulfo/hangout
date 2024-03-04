@@ -25,6 +25,13 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# env files
+.env
+
+# firebase service account
+service-account.json
+.firebaserc
+
 # local env files
 .env*.local
 
