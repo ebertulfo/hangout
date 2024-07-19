@@ -21,15 +21,20 @@ export function EventsTable() {
   const [events, setEvents] = useState<IEvent[]>([]);
 
   useEffect(() => {
-    const q = query(collection(db, "events"), where("userId", "==", user.uid));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const newEvents: IEvent[] = [];
-      snapshot.forEach((doc) => {
-        newEvents.push({ ...doc.data(), id: doc.id } as IEvent);
+    if (user?.uid) {
+      const q = query(
+        collection(db, "events"),
+        where("userId", "==", user.uid)
+      );
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const newEvents: IEvent[] = [];
+        snapshot.forEach((doc) => {
+          newEvents.push({ ...doc.data(), id: doc.id } as IEvent);
+        });
+        setEvents(newEvents);
+        return () => unsubscribe();
       });
-      setEvents(newEvents);
-      return () => unsubscribe();
-    });
+    }
   }, [user.uid]);
 
   return (

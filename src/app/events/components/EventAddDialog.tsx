@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,108 +16,61 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { AuthContext } from "@/app/_contexts/AuthContext";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { db } from "@/lib/firebase/firebase";
 import { addDoc, collection } from "firebase/firestore";
 import { useContext } from "react";
-
 const formSchema = z.object({
-  identifier: z.string(),
-  name: z.string(),
-  phoneNumber: z.string(),
-  email: z.string().email(),
+  name: z.string().min(2).max(50),
+  date: z.string().min(2).max(50),
+  location: z.string().min(2).max(500),
 });
-
-export default function AddAttendeeDialog({
-  eventId,
-  attendeesCount,
-}: {
-  eventId: string;
-  attendeesCount: number;
-}) {
-  const { toast } = useToast();
+export default function EventAddDialog() {
   const user = useContext(AuthContext);
+  const { toast } = useToast();
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      identifier: `HO${attendeesCount + 1}`,
-      name: "",
-      phoneNumber: "",
-      email: "",
-    },
   });
+
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    let attendeeRef = collection(db, `/events/${eventId}/attendees`);
-    await addDoc(attendeeRef, {
+    let eventRef = collection(db, "events");
+    const res = await addDoc(eventRef, {
       ...values,
-      status: "unassigned",
+      userId: user.uid,
     });
     console.log(values);
+    console.log(res);
     toast({
-      title: "Attendee Registered",
+      title: "Event Added",
     });
-    form.reset();
   }
   return (
     <Dialog>
-      <DialogTrigger>
-        <Button>Register Attendee</Button>
-      </DialogTrigger>
+      <DialogTrigger>Add</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Register an attendee to the event</DialogTitle>
+          <DialogTitle>Add Event</DialogTitle>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="identifier"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Identifier</FormLabel>
-                    <FormControl>
-                      <Input type="text" placeholder="shadcn" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Identifier for the attendee. Will serve as their ID for
-                      the event.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>Event Name</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="shadcn" {...field} />
-                    </FormControl>
-                    <FormDescription>The attendee&apos;s name.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phoneNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                      <Input type="text" placeholder="shadcn" {...field} />
+                      <Input placeholder="shadcn" {...field} />
                     </FormControl>
                     <FormDescription>
-                      The attendee&apos;s phone number.
+                      This is your public display name.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -124,22 +78,42 @@ export default function AddAttendeeDialog({
               />
               <FormField
                 control={form.control}
-                name="email"
+                name="date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Event Date</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="shadcn" {...field} />
+                      <Input
+                        type="datetime-local"
+                        placeholder="shadcn"
+                        {...field}
+                      />
                     </FormControl>
                     <FormDescription>
-                      The attendee&apos;s email address.
+                      This is your public display name.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Location</FormLabel>
+                    <FormControl>
+                      <Input placeholder="shadcn" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      This is your public display name.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <Button type="submit">Register Attendee</Button>
+              <Button type="submit">Submit</Button>
             </form>
           </Form>
         </DialogHeader>

@@ -1,39 +1,38 @@
 "use client";
-import {
-  AttendeesContext,
-  AttendeesProvider,
-} from "@/app/_contexts/AttendeesContext";
+import { useAttendees } from "@/app/_hooks/Attendees";
+import { useTimerTick } from "@/app/_hooks/TimerTick";
+import { useVendor } from "@/app/_hooks/Vendors";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { db } from "@/lib/firebase/firebase";
-import { IAttendee, IEvent, IVendorInEvent } from "@/types";
+import { IAttendee, IEvent } from "@/types";
 import dayjs from "dayjs";
-import { collection, doc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { useParams } from "next/navigation";
-import { useContext, useEffect, useState } from "react";
-import AddAttendeeDialog from "./AddAttendeeDialog";
-import AddVendorDialog from "./AddVendorDialog";
-import { AttendeesTable } from "./AttendeesTable";
-import VendorCard from "./VendorCard";
+import { useEffect, useState } from "react";
+import AddAttendeeDialog from "./attendee/AddAttendeeDialog";
+import { AttendeesTable } from "./attendee/AttendeesTable";
+import { MeetingManagement } from "./meetings/MeetingsManagement";
+import { RSVPsTable } from "./rsvps/RSVPsTable";
+import { UploadRSVP } from "./rsvps/UploadRSVP";
+import AddVendorDialog from "./vendor/AddVendorDialog";
+import VendorCard from "./vendor/VendorCard";
 
 export default function EventManagement() {
-  const attendees: IAttendee[] = useContext(AttendeesContext);
-  const [event, setEvent] = useState<IEvent>();
-  const [vendors, setVendors] = useState<IVendorInEvent[]>([]);
   const { id }: { id: string } = useParams();
+  const { attendees } = useAttendees(id);
+  const { vendors } = useVendor(id);
+  const [event, setEvent] = useState<IEvent>();
+
+  const [openMeetingAssignmentDialog, setOpenMeetingAssignmentDialog] =
+    useState(false);
+  const [selectedAttendee, setSelectedAttendee] = useState<IAttendee | null>(
+    null
+  );
+  const { time } = useTimerTick();
 
   useEffect(() => {
     // Get event from firestore
     if (id) {
-      console.log("@@@ query", "events", id, "vendors");
-      const unsub = onSnapshot(
-        collection(db, "events", id as string, "vendors"),
-        (snapshot) => {
-          console.log("@@@@ VENDORS SNAPSHOT", snapshot);
-          const data: IVendorInEvent[] = snapshot.docs.map(
-            (doc) => ({ id: doc.id, ...doc.data() } as IVendorInEvent)
-          );
-          setVendors(data);
-        }
-      );
       const eventDocRef = doc(db, "events", id as string);
       getDoc(eventDocRef).then((docSnap) => {
         if (docSnap.exists()) {
@@ -42,35 +41,63 @@ export default function EventManagement() {
           setEvent({ ...data, id });
         }
       });
-
-      return () => unsub();
     }
   }, [id]);
+
   return event ? (
-    <AttendeesProvider eventId={id}>
-      <main className="flex flex-row gap-5 m-5">
-        <div>
-          <h1>
-            {event?.name} - {event?.location} {event?.date}
-          </h1>
-          {event && <AddVendorDialog event={event} />}
-          <h2>Event Vendors</h2>
-          <div className={"flex gap-10"}>
-            {vendors.map((vendor) => (
-              <VendorCard key={vendor.id} eventId={event.id} vendor={vendor} />
-            ))}
+    <main className="flex flex-row gap-5 m-5">
+      {/* <AssignAttendeeDialog
+        isOpen={openMeetingAssignmentDialog}
+        // attendee={selectedAttendee}
+        vendors={vendors}
+        eventId={id}
+      /> */}
+      <Tabs defaultValue="vendors" className="w-full">
+        <TabsList>
+          <TabsTrigger value="vendors">Vendors</TabsTrigger>
+          <TabsTrigger value="meetings">Meetings</TabsTrigger>
+          <TabsTrigger value="attendees">Attendees</TabsTrigger>
+          <TabsTrigger value="rsvps">RSVPs</TabsTrigger>
+        </TabsList>
+        <TabsContent value="vendors">
+          <div>
+            <h1>
+              {event?.name} - {event?.location} {event?.date}
+            </h1>
+            {event && <AddVendorDialog event={event} />}
+            <h2>Event Vendors</h2>
+            <div className={"flex gap-10"}>
+              {vendors.map((vendor) => (
+                <VendorCard
+                  key={vendor.id}
+                  eventId={event.id}
+                  vendor={vendor}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-        <div>
-          <h2>Event Attendees</h2>
-          <AddAttendeeDialog
-            eventId={event.id}
-            attendeesCount={attendees.length}
-          />
-          <AttendeesTable eventId={event.id} attendees={attendees} />
-        </div>
-      </main>
-    </AttendeesProvider>
+        </TabsContent>
+        <TabsContent value="meetings">
+          <MeetingManagement vendors={vendors} eventId={event.id} />
+        </TabsContent>
+        <TabsContent value="attendees">
+          <div>
+            <h2>Event Attendees</h2>
+            <AddAttendeeDialog
+              eventId={event.id}
+              attendeesCount={attendees.length}
+            />
+            <AttendeesTable eventId={event.id} attendees={attendees} />
+          </div>
+        </TabsContent>
+        <TabsContent value="rsvps">
+          <h2 className="text-xl pb-2">Event RSVPs</h2>
+
+          <RSVPsTable eventId={event.id} />
+          <UploadRSVP eventId={event.id} />
+        </TabsContent>
+      </Tabs>
+    </main>
   ) : (
     "Please wait..."
   );

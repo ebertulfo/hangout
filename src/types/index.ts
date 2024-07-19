@@ -1,4 +1,6 @@
-export type APIResponse<T = object> = { success: true; data: T } | { success: false; error: string };
+export type APIResponse<T = object> =
+  | { success: true; data: T }
+  | { success: false; error: string };
 
 export interface IEvent {
   id: string;
@@ -13,9 +15,11 @@ export interface IEvent {
 
 export interface IRsvp {
   id: string;
-  eventId: string;
-  timeslot: 1 | 2;
-  status: "";
+  name: string;
+  email: string;
+  floorPlanPrinted: boolean;
+  phone: string;
+  attended: boolean;
   vendorIds: string[];
 }
 
@@ -56,6 +60,7 @@ export interface IAttendee {
   phoneNumber: string;
   eventId: string;
   currentMeetingVendorId: string;
+  currentMeetingStartedAt: string;
   status: "unassigned" | "waiting" | "in meeting";
   metVendorIds: string[];
 }
@@ -70,11 +75,12 @@ export interface IMeeting {
   status: "started" | "ended" | "cancelled";
 }
 
-export interface IWaitlistItem {
+export interface IQueuedAttendee {
   id: string;
   eventId: string;
+  attendeeIdentifier: string;
   attendeeId: string;
-  vendorIds: string[];
-  date: string;
-  time: string;
+  attendeeName: string;
+  vendorId: string;
+  queuedAt: string;
 }

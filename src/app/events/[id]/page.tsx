@@ -1,4 +1,3 @@
-import { AttendeesProvider } from "@/app/_contexts/AttendeesContext";
 import { getCurrentUser } from "@/lib/firebase/firebase-admin";
 import { redirect } from "next/navigation";
 import EventManagement from "./components/EventManagement";
@@ -9,11 +8,20 @@ export default async function EventPage({
   params: { id: string };
 }) {
   // Get event id from params
-  const currentUser = await getCurrentUser();
-  if (!currentUser) redirect("/sign-in");
-  return (
-    <AttendeesProvider eventId={id}>
-      <EventManagement />
-    </AttendeesProvider>
-  );
+  try {
+    const currentUser = await getCurrentUser();
+    console.log("currentUser", currentUser);
+    if (!currentUser) redirect("/sign-in");
+  } catch (error) {
+    console.error("Error getting current user", error);
+    // Logout
+    const response = await fetch(`${process.env.APP_URL}/api/auth/sign-out`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    redirect("/sign-in");
+  }
+
+  return <EventManagement />;
 }

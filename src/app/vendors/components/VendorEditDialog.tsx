@@ -26,8 +26,6 @@ import { IVendor } from "@/types";
 import { doc, updateDoc } from "firebase/firestore";
 const formSchema = z.object({
   name: z.string().min(2).max(50),
-  date: z.string().min(2).max(50),
-  location: z.string().min(2).max(500),
 });
 export default function VendorEditDialog({ vendor }: { vendor: IVendor }) {
   const { toast } = useToast();
@@ -36,7 +34,6 @@ export default function VendorEditDialog({ vendor }: { vendor: IVendor }) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: vendor.name,
-      date: vendor.createdAt,
     },
   });
 
@@ -74,7 +71,7 @@ export default function VendorEditDialog({ vendor }: { vendor: IVendor }) {
                 )}
               />
 
-              <Button type="submit">Submit</Button>
+              <Button type="submit">Submits</Button>
             </form>
           </Form>
         </DialogHeader>

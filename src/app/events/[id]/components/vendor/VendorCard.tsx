@@ -1,4 +1,6 @@
-import { AttendeesContext } from "@/app/_contexts/AttendeesContext";
+import { useAttendees } from "@/app/_hooks/Attendees";
+import { useMeetings } from "@/app/_hooks/Meetings";
+import { useTimerTick } from "@/app/_hooks/TimerTick";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,11 +11,10 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { db } from "@/lib/firebase/firebase";
-import { IAttendee, IVendorInEvent, IVendorInEventMeeting } from "@/types";
+import { IVendorInEvent, IVendorInEventMeeting } from "@/types";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { deleteDoc, doc, getDoc, updateDoc } from "firebase/firestore";
-import { useContext, useEffect, useState } from "react";
+import { deleteDoc, doc } from "firebase/firestore";
 import AssignAttendeeDialog from "./AssignAttendeeDialog";
 import EditVendorDialog from "./EditVendorDialog";
 dayjs.extend(utc);
@@ -25,8 +26,9 @@ export default function VendorCard({
   eventId: string;
 }) {
   const { toast } = useToast();
-  const [time, setTime] = useState(Date.now());
-  const attendees: IAttendee[] = useContext(AttendeesContext);
+  const { endMeeting } = useMeetings(eventId);
+  const { time } = useTimerTick();
+  const { attendees } = useAttendees(eventId);
   const deleteVendor = async (eventId: string, vendorId: string) => {
     console.log(vendor);
     console.log("Deleting vendor", "events", eventId, "vendors", vendorId);
@@ -41,40 +43,6 @@ export default function VendorCard({
   const slots = attendees.filter(
     (attendee) => attendee.currentMeetingVendorId == vendor.id
   ).length;
-
-  const endMeeting = async (vendorId: string, attendeeId: string) => {
-    const vendorRef = doc(db, "events", eventId, "vendors", vendorId);
-    const vendor = await getDoc(vendorRef);
-    const vendorData = vendor.data() as IVendorInEvent;
-    const meetings = vendorData.meetings;
-    const meeting = meetings.find(
-      (meeting) => meeting.attendeeId === attendeeId
-    );
-    if (!meeting) {
-      toast({
-        title: "Meeting not found",
-      });
-      return;
-    }
-    meeting.meetingEndedAt = dayjs().utc().toISOString();
-    await updateDoc(vendorRef, {
-      meetings: meetings,
-    });
-    const attendeeRef = doc(db, "events", eventId, "attendees", attendeeId);
-    await updateDoc(attendeeRef, {
-      status: "unassigned",
-      currentMeetingVendorId: null,
-    });
-    toast({
-      title: "Meeting Ended",
-    });
-  };
-  useEffect(() => {
-    const interval = setInterval(() => setTime(Date.now()), 1000);
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
 
   const renderTimeLeft = (meetingStartedAt: string) => {
     const timeLeft = dayjs(meetingStartedAt)
@@ -125,9 +93,19 @@ export default function VendorCard({
             eventId={eventId}
           />
         </div>
-        <h3 className="font-bold mb-5">Meetings</h3>
-        <div className="font-light flex flex-col gap-8">
-          {vendor.meetings
+        <div className="font-semibold text-gray-600 text-sm">
+          Had{" "}
+          {
+            vendor.meetings.filter((meeting) => meeting.meetingEndedAt !== null)
+              .length
+          }{" "}
+          meetings this event
+        </div>
+        <h3 className="font-bold mb-3">Meetings</h3>
+
+        <div className="font-light flex flex-col gap-8 mb-3">
+          {vendor.meetings.filter((meeting) => meeting.meetingEndedAt === null)
+            .length
             ? vendor.meetings
                 .filter((meeting) => meeting.meetingEndedAt === null)
                 .map((meeting: IVendorInEventMeeting) => (

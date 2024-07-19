@@ -22,19 +22,24 @@ export function VendorsTable() {
   const [vendors, setvendors] = useState<IVendor[]>([]);
 
   useEffect(() => {
-    const q = query(collection(db, "vendors"), where("userId", "==", user.uid));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const newvendors: IVendor[] = [];
-      snapshot.forEach((doc) => {
-        newvendors.push({ ...doc.data(), id: doc.id } as IVendor);
+    if (user?.uid) {
+      const q = query(
+        collection(db, "vendors"),
+        where("userId", "==", user.uid)
+      );
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const newvendors: IVendor[] = [];
+        snapshot.forEach((doc) => {
+          newvendors.push({ ...doc.data(), id: doc.id } as IVendor);
+        });
+        setvendors(newvendors);
+        return () => unsubscribe();
       });
-      setvendors(newvendors);
-      return () => unsubscribe();
-    });
+    }
   }, [user.uid]);
 
   return (
-    <>
+    <div>
       <VendorAddDialog />
       <Table>
         <TableCaption>A list of your vendors.</TableCaption>
@@ -47,12 +52,7 @@ export function VendorsTable() {
         </TableHeader>
         <TableBody>
           {vendors.map((vendor) => (
-            <TableRow
-              key={vendor.id}
-              onClick={() => {
-                console.log(vendor);
-              }}
-            >
+            <TableRow key={vendor.id}>
               <TableCell>{vendor.name}</TableCell>
               <TableCell>{vendor.createdAt}</TableCell>
               <TableCell>
@@ -65,6 +65,6 @@ export function VendorsTable() {
           ))}
         </TableBody>
       </Table>
-    </>
+    </div>
   );
 }

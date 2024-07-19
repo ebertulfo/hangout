@@ -1,4 +1,4 @@
-import { AttendeesContext } from "@/app/_contexts/AttendeesContext";
+import { useAttendees } from "@/app/_hooks/Attendees";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -25,14 +25,14 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { db } from "@/lib/firebase/firebase";
 import { cn } from "@/lib/utils";
-import { IAttendee, IVendorInEvent } from "@/types";
+import { IVendorInEvent } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { doc, updateDoc } from "firebase/firestore";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 const FormSchema = z.object({
@@ -51,7 +51,7 @@ export default function AssignAttendeeDialog({
 }) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
-  const attendees: IAttendee[] = useContext(AttendeesContext);
+  const { attendees } = useAttendees(eventId);
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
   });
@@ -85,6 +85,7 @@ export default function AssignAttendeeDialog({
     await updateDoc(attendeeRef, {
       status: "in meeting",
       currentMeetingVendorId: vendor.id,
+      currentMeetingStartedAt: dayjs.extend(utc).utc().format(),
     });
     const vendorRef = doc(db, "events", eventId, "vendors", vendor.id);
     const meetings = vendor?.meetings || [];
