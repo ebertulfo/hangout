@@ -20,8 +20,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { AuthContext } from "@/app/_contexts/AuthContext";
-import { useAttendees } from "@/app/_hooks/Attendees";
-import { useRSVPs } from "@/app/_hooks/RSVPs";
+import { useAttendees } from "@/app/_hooks/attendees";
+import { useRSVPs } from "@/app/_hooks/rsvps";
 import {
   Command,
   CommandEmpty,
@@ -58,6 +58,7 @@ export default function AddAttendeeDialog({
   const { rsvps, updateRSVP } = useRSVPs(eventId);
 
   const [selectedRsvp, setSelectedRsvp] = useState<IRsvp>();
+  const [openDialog, setOpenDialog] = useState(false);
   const user = useContext(AuthContext);
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
@@ -71,10 +72,14 @@ export default function AddAttendeeDialog({
   });
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    await createAttendee({
-      ...values,
-      identifier: `HO${attendeesCount < 10 && "0"}${attendeesCount + 1}`,
-    });
+    try {
+      await createAttendee({
+        ...values,
+        identifier: `HO${attendeesCount < 10 && "0"}${attendeesCount + 1}`,
+      });
+      form.reset();
+      setOpenDialog(false);
+    } catch (error) {}
 
     if (selectedRsvp) {
       await updateRSVP(selectedRsvp.id, { attended: true });
@@ -83,7 +88,7 @@ export default function AddAttendeeDialog({
     form.reset();
   }
   return (
-    <Dialog>
+    <Dialog open={openDialog} onOpenChange={setOpenDialog}>
       <DialogTrigger>
         <Button>Register Attendee</Button>
       </DialogTrigger>

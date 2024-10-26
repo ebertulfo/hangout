@@ -36,16 +36,23 @@ export function MeetingAssignmentDialog({
     null
   );
 
-  const { meetings, assignAttendee } = useMeetings(eventId);
-  const { queue, queueAttendee } = useQueue(eventId);
+  const { assignAttendee } = useMeetings(eventId);
+  const { queue, add } = useQueue(eventId);
 
   const assignToVendor = async (
     vendor: IVendorInEvent,
     attendee: IAttendee
   ) => {
     // Check if vendor has available slots
+    console.log("@@@ VENDOR MEETINGS", vendor.meetings);
+    if (
+      vendor.meetings.filter((meeting) => meeting.meetingEndedAt === null)
+        .length >= vendor.slots
+    ) {
+      // If vendor has no available slots, add attendee to queue
+      add(attendee.id, attendee.name, attendee.identifier, vendor.id);
+    }
     await assignAttendee(vendor, attendee);
-    setSelectedVendor(null);
     handleClose();
   };
 
@@ -95,13 +102,12 @@ export function MeetingAssignmentDialog({
                       setSelectedVendor(vendor);
                     }}
                     disabled={
-                      !!meetings.find(
+                      !!vendor.meetings?.find(
                         (meeting) =>
                           meeting.attendeeId === attendee?.id &&
-                          (meeting.meetingEndedAt !== null ||
-                            meeting.vendorId === vendor.id)
+                          meeting.meetingEndedAt !== null
                       ) ||
-                      !!queue.find(
+                      queue.find(
                         (q) =>
                           q.attendeeId === attendee?.id &&
                           q.vendorId === vendor?.id
@@ -124,10 +130,8 @@ export function MeetingAssignmentDialog({
           </PopoverContent>
         </Popover>
         {selectedVendor &&
-          (meetings.filter(
-            (meeting) =>
-              meeting.meetingEndedAt === null &&
-              meeting.vendorId === selectedVendor.id
+          (selectedVendor?.meetings.filter(
+            (meeting) => meeting.meetingEndedAt === null
           ).length < selectedVendor.slots ? (
             <>
               <Button onClick={() => assignToVendor(selectedVendor, attendee)}>
@@ -139,7 +143,7 @@ export function MeetingAssignmentDialog({
               <p>All vendor&apos;s slots currently occupied</p>
               <Button
                 onClick={() =>
-                  queueAttendee(
+                  add(
                     attendee.id,
                     attendee.name,
                     attendee.identifier,

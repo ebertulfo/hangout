@@ -1,4 +1,4 @@
-import { useAttendees } from "@/app/_hooks/Attendees";
+import { useAttendees } from "@/app/_hooks/attendees";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -107,7 +107,6 @@ export default function AssignAttendeeDialog({
     });
     setOpen(false);
   }
-  console.log();
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger disabled={disabled}>

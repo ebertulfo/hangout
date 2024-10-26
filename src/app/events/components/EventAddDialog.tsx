@@ -22,10 +22,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { AuthContext } from "@/app/_contexts/AuthContext";
-import { useToast } from "@/components/ui/use-toast";
-import { db } from "@/lib/firebase/firebase";
-import { addDoc, collection } from "firebase/firestore";
-import { useContext } from "react";
+import { useEvents } from "@/app/_hooks/events";
+import { useContext, useState } from "react";
 const formSchema = z.object({
   name: z.string().min(2).max(50),
   date: z.string().min(2).max(50),
@@ -33,7 +31,8 @@ const formSchema = z.object({
 });
 export default function EventAddDialog() {
   const user = useContext(AuthContext);
-  const { toast } = useToast();
+  const [openDialog, setOpenDialog] = useState(false);
+  const { addEvent } = useEvents(user?.uid);
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,19 +40,17 @@ export default function EventAddDialog() {
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    let eventRef = collection(db, "events");
-    const res = await addDoc(eventRef, {
-      ...values,
-      userId: user.uid,
-    });
-    console.log(values);
-    console.log(res);
-    toast({
-      title: "Event Added",
-    });
+    try {
+      await addEvent({
+        ...values,
+        userId: user?.uid,
+      });
+      setOpenDialog(false);
+      form.reset();
+    } catch (error) {}
   }
   return (
-    <Dialog>
+    <Dialog open={openDialog} onOpenChange={setOpenDialog}>
       <DialogTrigger>Add</DialogTrigger>
       <DialogContent>
         <DialogHeader>

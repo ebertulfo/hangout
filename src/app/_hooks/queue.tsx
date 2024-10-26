@@ -10,9 +10,11 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
+import { useMeetings } from "./meetings";
 
 export function useQueue(eventId: string) {
   const [queue, setQueue] = useState<IQueuedAttendee[]>([]);
+  const { meetings } = useMeetings(eventId);
   const { toast } = useToast();
   useEffect(() => {
     // Create realtime connection for the event's attendees
@@ -32,7 +34,7 @@ export function useQueue(eventId: string) {
     };
   }, [eventId]);
 
-  const add = async (
+  const queueAttendee = async (
     attendeeId: string,
     attendeeName: string,
     attendeeIdentifier: string,
@@ -47,6 +49,17 @@ export function useQueue(eventId: string) {
       queuedAt: new Date().toISOString(),
     };
     try {
+      // Check if attendee is already in a meeting. Doesn't matter which vendor, they can't be in a meeting and in the queue at the same time
+      const attendeeInMeeting = meetings.find(
+        (meeting) => meeting.attendeeId === attendeeId && meeting.meetingEndedAt
+      );
+      if (attendeeInMeeting) {
+        toast({
+          title: "Attendee is already in a meeting",
+          variant: "destructive",
+        });
+        return;
+      }
       // Check if the attendee is already in the queue for the same vendor
       const attendeeInQueue = queue.find(
         (attendee) =>
@@ -70,7 +83,7 @@ export function useQueue(eventId: string) {
     }
   };
 
-  const remove = async (attendeeId: string) => {
+  const dequeueAttendee = async (attendeeId: string) => {
     // Implement this function to remove an attendee from the queue
     return await deleteDoc(doc(db, `/events/${eventId}/queue/${attendeeId}`));
   };
@@ -84,8 +97,8 @@ export function useQueue(eventId: string) {
 
   return {
     queue,
-    add,
-    remove,
+    queueAttendee,
+    dequeueAttendee,
     update,
   };
 }

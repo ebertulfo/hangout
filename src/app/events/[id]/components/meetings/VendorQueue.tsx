@@ -1,12 +1,13 @@
-import { useMeetings } from "@/app/_hooks/Meetings";
-import { useQueue } from "@/app/_hooks/Queue";
-import { useTimerTick } from "@/app/_hooks/TimerTick";
+import { useMeetings } from "@/app/_hooks/meetings";
+import { useQueue } from "@/app/_hooks/queue";
+import { useTimerTick } from "@/app/_hooks/timerTick";
 import { renderTimeLeft } from "@/app/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { IAttendee, IVendorInEvent } from "@/types";
 import dayjs from "dayjs";
+import { useMemo } from "react";
 
 export function VendorQueue({
   vendor,
@@ -17,11 +18,17 @@ export function VendorQueue({
   attendees: Array<IAttendee>;
   eventId: string;
 }) {
-  console.log(vendor);
+  // console.log(vendor);
   const { time } = useTimerTick();
-  const { endMeeting } = useMeetings(eventId);
+  const { meetings, assignAttendee, endMeeting } = useMeetings(eventId);
   const { queue } = useQueue(eventId);
-  console.log("@@@ Q", queue);
+  const ongoingVendorMeetings = useMemo(() => {
+    console.log("@@@ MEETINGS", meetings);
+    return meetings.filter(
+      (meeting) =>
+        meeting.vendorId === vendor.id && meeting.meetingEndedAt === null
+    );
+  }, [meetings, vendor.id]);
   return (
     <Card className="w-[400px]">
       <CardHeader>
@@ -29,35 +36,26 @@ export function VendorQueue({
       </CardHeader>
       <CardContent>
         <h3 className="font-light mb-5">
-          Current Meetings:{" "}
-          {
-            vendor.meetings.filter((meeting) => meeting.meetingEndedAt === null)
-              .length
-          }
-          /{vendor.slots}
+          Current Meetings: {ongoingVendorMeetings.length}/{vendor.slots}
         </h3>
         <div className="flex flex-col gap-5">
-          {attendees.filter((attendee) => attendee.status === "in meeting")
-            .length > 0 ? (
-            attendees
-              .filter((attendee) => attendee.status === "in meeting")
+          {ongoingVendorMeetings.length > 0 ? (
+            ongoingVendorMeetings
               .sort(
                 (a, b) =>
-                  new Date(a.currentMeetingStartedAt).getTime() -
-                  new Date(b.currentMeetingStartedAt).getTime()
+                  new Date(a.meetingStartedAt).getTime() -
+                  new Date(b.meetingStartedAt).getTime()
               )
-              .map((attendee) => (
-                <Card key={attendee.id}>
+              .map((meeting) => (
+                <Card key={meeting.id}>
                   <CardHeader>
                     <CardTitle>
-                      {attendee.identifier} - {attendee.name}
+                      {meeting.attendeeIdentifier} - {meeting.attendeeName}
                       <div className="text-xs">
                         Meeting started at{" "}
                         <span className="font-bold">
                           {" "}
-                          {dayjs(attendee.currentMeetingStartedAt).format(
-                            "hh:mm A"
-                          )}
+                          {dayjs(meeting.meetingStartedAt).format("hh:mm A")}
                         </span>
                       </div>
                     </CardTitle>
@@ -66,14 +64,11 @@ export function VendorQueue({
                     <div>
                       <p className="pb-6">
                         {/* Time Remaining:{" "} */}
-                        {renderTimeLeft(attendee.currentMeetingStartedAt, time)}
+                        {renderTimeLeft(meeting.meetingStartedAt, time)}
                       </p>
                       <Button
                         onClick={() => {
-                          let vendorId = attendee.currentMeetingVendorId;
-                          let attendeeId = attendee.id;
-
-                          endMeeting(vendorId, attendeeId);
+                          endMeeting(meeting.id);
                         }}
                       >
                         End Meeting
@@ -108,6 +103,13 @@ export function VendorQueue({
                         Queued At:{" "}
                         {dayjs(queuedAttendee.queuedAt).format("hh:mm A")}
                       </div>
+                      <Button
+                        onClick={() => {
+                          assignAttendee(vendor, queuedAttendee);
+                        }}
+                      >
+                        Assign
+                      </Button>
                     </CardContent>
                   </Card>
                 ))}

@@ -1,6 +1,6 @@
-import { useAttendees } from "@/app/_hooks/Attendees";
-import { useMeetings } from "@/app/_hooks/Meetings";
-import { useTimerTick } from "@/app/_hooks/TimerTick";
+import { useAttendees } from "@/app/_hooks/attendees";
+import { useMeetings } from "@/app/_hooks/meetings";
+import { useTimerTick } from "@/app/_hooks/timerTick";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,10 +11,11 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { db } from "@/lib/firebase/firebase";
-import { IVendorInEvent, IVendorInEventMeeting } from "@/types";
+import { IVendorInEvent } from "@/types";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { deleteDoc, doc } from "firebase/firestore";
+import { useMemo } from "react";
 import AssignAttendeeDialog from "./AssignAttendeeDialog";
 import EditVendorDialog from "./EditVendorDialog";
 dayjs.extend(utc);
@@ -29,6 +30,17 @@ export default function VendorCard({
   const { endMeeting } = useMeetings(eventId);
   const { time } = useTimerTick();
   const { attendees } = useAttendees(eventId);
+  const { meetings } = useMeetings(eventId);
+
+  const vendorMeetings = useMemo(
+    () => meetings.filter((meeting) => meeting.vendorId === vendor.id),
+    [meetings, vendor.id]
+  );
+
+  const ongoingMeetings = useMemo(() => {
+    return vendorMeetings.filter((meeting) => meeting.meetingEndedAt === null);
+  }, [vendorMeetings]);
+
   const deleteVendor = async (eventId: string, vendorId: string) => {
     console.log(vendor);
     console.log("Deleting vendor", "events", eventId, "vendors", vendorId);
@@ -40,9 +52,6 @@ export default function VendorCard({
       title: "Event Vendor Deleted",
     });
   };
-  const slots = attendees.filter(
-    (attendee) => attendee.currentMeetingVendorId == vendor.id
-  ).length;
 
   const renderTimeLeft = (meetingStartedAt: string) => {
     const timeLeft = dayjs(meetingStartedAt)
@@ -85,10 +94,10 @@ export default function VendorCard({
       <CardContent>
         <div className="flex flex-row justify-between">
           <p className="font-bold">
-            Slots: {slots}/ {vendor.slots}
+            Slots: {ongoingMeetings.length}/ {vendor.slots}
           </p>
           <AssignAttendeeDialog
-            disabled={slots === vendor.slots}
+            disabled={ongoingMeetings.length === vendor.slots}
             vendor={vendor}
             eventId={eventId}
           />
@@ -96,7 +105,7 @@ export default function VendorCard({
         <div className="font-semibold text-gray-600 text-sm">
           Had{" "}
           {
-            vendor.meetings.filter((meeting) => meeting.meetingEndedAt !== null)
+            vendorMeetings.filter((meeting) => meeting.meetingEndedAt !== null)
               .length
           }{" "}
           meetings this event
@@ -104,41 +113,34 @@ export default function VendorCard({
         <h3 className="font-bold mb-3">Meetings</h3>
 
         <div className="font-light flex flex-col gap-8 mb-3">
-          {vendor.meetings.filter((meeting) => meeting.meetingEndedAt === null)
-            .length
-            ? vendor.meetings
-                .filter((meeting) => meeting.meetingEndedAt === null)
-                .map((meeting: IVendorInEventMeeting) => (
-                  <div
-                    className="flex flex-row justify-between align-middle"
-                    key={meeting.attendeeId}
-                  >
-                    <div className="flex flex-col">
-                      <span className="font-medium">
-                        {meeting.attendeeIdentifier} - {meeting.attendeeName}{" "}
-                      </span>
-                      <span>
-                        <p className="font-medium">Started At: </p>
-                        {meeting.meetingStartedAt &&
-                          dayjs(meeting.meetingStartedAt).format("hh:mm A")}
-                      </span>
-                      <span>
-                        <p className="font-medium">Time Remaining:</p>
-                        {meeting.meetingStartedAt &&
-                          renderTimeLeft(meeting.meetingStartedAt)}
-                      </span>
-                    </div>
-                    <div className="">
-                      <Button
-                        onClick={() =>
-                          endMeeting(vendor.id, meeting.attendeeId)
-                        }
-                      >
-                        End Meeting
-                      </Button>
-                    </div>
+          {ongoingMeetings.length > 0
+            ? ongoingMeetings.map((meeting) => (
+                <div
+                  className="flex flex-row justify-between align-middle"
+                  key={meeting.attendeeId}
+                >
+                  <div className="flex flex-col">
+                    <span className="font-medium">
+                      {meeting.attendeeIdentifier} - {meeting.attendeeName}{" "}
+                    </span>
+                    <span>
+                      <p className="font-medium">Started At: </p>
+                      {meeting.meetingStartedAt &&
+                        dayjs(meeting.meetingStartedAt).format("hh:mm A")}
+                    </span>
+                    <span>
+                      <p className="font-medium">Time Remaining:</p>
+                      {meeting.meetingStartedAt &&
+                        renderTimeLeft(meeting.meetingStartedAt)}
+                    </span>
                   </div>
-                ))
+                  <div className="">
+                    <Button onClick={() => endMeeting(meeting.id)}>
+                      End Meeting
+                    </Button>
+                  </div>
+                </div>
+              ))
             : "No ongoing meetings"}
         </div>
       </CardContent>

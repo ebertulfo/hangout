@@ -19,7 +19,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { AuthContext } from "@/app/_contexts/AuthContext";
-import { useAttendees } from "@/app/_hooks/Attendees";
+import { useAttendees } from "@/app/_hooks/attendees";
 import { Input } from "@/components/ui/input";
 import { IAttendee } from "@/types";
 import { useContext } from "react";

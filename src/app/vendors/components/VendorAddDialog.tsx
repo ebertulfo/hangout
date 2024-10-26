@@ -43,7 +43,7 @@ export default function VendorAddDialog() {
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
     await addDoc(collection(db, "vendors"), {
-      userId: user.uid,
+      userId: user?.uid,
       createdAt: dayjs.extend(utc).utc().format(),
       ...values,
     });

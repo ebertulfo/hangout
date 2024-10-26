@@ -1,4 +1,3 @@
-import { getCurrentUser } from "@/lib/firebase/firebase-admin";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Navbar from "./_components/NavBar";
@@ -19,11 +18,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const currentUser = await getCurrentUser();
+  const currentUser = {};
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider initialUser={currentUser?.toJSON()}>
+        <AuthProvider>
           <Navbar />
           {children}
           <Toaster />

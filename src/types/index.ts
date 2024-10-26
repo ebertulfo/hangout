@@ -3,14 +3,20 @@ export type APIResponse<T = object> =
   | { success: false; error: string };
 
 export interface IEvent {
+  name: string;
+  location: string;
+  date: string;
+  userId: string;
+}
+export interface IExistingEvent {
   id: string;
   name: string;
   location: string;
   date: string;
-  time: string;
-  vendors: IVendorInEvent[];
-  attendees: IAttendee[];
-  rsvps: IRsvp[];
+  vendors?: IVendorInEvent[];
+  attendees?: IAttendee[];
+  rsvps?: IRsvp[];
+  userId: string;
 }
 
 export interface IRsvp {
@@ -34,14 +40,24 @@ export interface IVendorInEvent {
   meetings: IVendorInEventMeeting[];
 }
 
-export interface IVendorInEventMeeting {
+export interface IMeeting {
+  vendorId: string;
   attendeeId: string;
   attendeeName: string;
   attendeeIdentifier: string;
   meetingStartedAt: string;
-  meetingEndedAt: string;
+  meetingEndedAt: string | null;
 }
 
+export interface IExistingMeeting {
+  id: string;
+  vendorId: string;
+  attendeeId: string;
+  attendeeName: string;
+  attendeeIdentifier: string;
+  meetingStartedAt: string;
+  meetingEndedAt: string | null;
+}
 export interface IVendor {
   id: string;
   vendorId: string;
@@ -63,16 +79,6 @@ export interface IAttendee {
   currentMeetingStartedAt: string;
   status: "unassigned" | "waiting" | "in meeting";
   metVendorIds: string[];
-}
-
-export interface IMeeting {
-  id: string;
-  vendorId: string;
-  attendeeId: string;
-  eventId: string;
-  startTime: string;
-  notes: string;
-  status: "started" | "ended" | "cancelled";
 }
 
 export interface IQueuedAttendee {

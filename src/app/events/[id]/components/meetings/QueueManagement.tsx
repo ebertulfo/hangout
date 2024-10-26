@@ -1,10 +1,8 @@
-import { useAttendees } from "@/app/_hooks/Attendees";
-import { useQueue } from "@/app/_hooks/Queue";
-import { useVendor } from "@/app/_hooks/Vendors";
+import { useAttendees } from "@/app/_hooks/attendees";
+import { useVendor } from "@/app/_hooks/vendors";
 import { VendorQueue } from "./VendorQueue";
 
 export function QueueManagement({ eventId }: { eventId: string }) {
-  const { queue } = useQueue(eventId);
   const { vendors } = useVendor(eventId);
   const { attendees } = useAttendees(eventId);
   return (

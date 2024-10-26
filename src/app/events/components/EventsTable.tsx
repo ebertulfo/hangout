@@ -1,6 +1,7 @@
 "use client";
 
 import { AuthContext } from "@/app/_contexts/AuthContext";
+import { useEvents } from "@/app/_hooks/events";
 import {
   Table,
   TableBody,
@@ -10,32 +11,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { db } from "@/lib/firebase/firebase";
-import { IEvent } from "@/types";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import EventEditDialog from "./EventEditDialog";
 
 export function EventsTable() {
   const user = useContext(AuthContext);
-  const [events, setEvents] = useState<IEvent[]>([]);
-
-  useEffect(() => {
-    if (user?.uid) {
-      const q = query(
-        collection(db, "events"),
-        where("userId", "==", user.uid)
-      );
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const newEvents: IEvent[] = [];
-        snapshot.forEach((doc) => {
-          newEvents.push({ ...doc.data(), id: doc.id } as IEvent);
-        });
-        setEvents(newEvents);
-        return () => unsubscribe();
-      });
-    }
-  }, [user.uid]);
+  const { events } = useEvents(user?.uid);
 
   return (
     <Table>

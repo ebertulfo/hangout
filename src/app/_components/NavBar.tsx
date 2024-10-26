@@ -25,7 +25,14 @@ const Navbar: React.FC = () => {
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
-                {user ? (
+                {!user ? (
+                  <a
+                    href="/sign-in"
+                    className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Sign In
+                  </a>
+                ) : (
                   <>
                     <a
                       href="/dashboard"
@@ -55,13 +62,6 @@ const Navbar: React.FC = () => {
                       Sign Out
                     </a>
                   </>
-                ) : (
-                  <a
-                    href="/sign-in"
-                    className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Sign In
-                  </a>
                 )}
               </div>
             </div>

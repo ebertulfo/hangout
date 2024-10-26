@@ -15,7 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { IEvent, IVendor } from "@/types";
+import { IExistingEvent, IVendor } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -47,7 +47,7 @@ const formSchema = z.object({
   vendor: z.string(),
   slots: z.number(),
 });
-export default function AddVendorDialog({ event }: { event: IEvent }) {
+export default function AddVendorDialog({ event }: { event: IExistingEvent }) {
   const { toast } = useToast();
   const user = useContext(AuthContext);
   const [vendors, setVendors] = useState<IVendor[]>([]);
@@ -65,7 +65,7 @@ export default function AddVendorDialog({ event }: { event: IEvent }) {
   useEffect(() => {
     if (event && user?.uid) {
       const vendorsRef = collection(db, "vendors");
-      const q = query(vendorsRef, where("userId", "==", user.uid));
+      const q = query(vendorsRef, where("userId", "==", user?.uid));
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         let vendors: IVendor[] = [];
         querySnapshot.forEach((doc) => {
@@ -75,7 +75,7 @@ export default function AddVendorDialog({ event }: { event: IEvent }) {
       });
       return () => unsubscribe();
     }
-  }, [event, user.uid]);
+  }, [event, user]);
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -84,8 +84,6 @@ export default function AddVendorDialog({ event }: { event: IEvent }) {
     // Get the vendor from the vendors array
     const vendor = vendors.find((vendor) => vendor.vendorId === vendorId);
     // Add the vendor to the event
-    console.log("@@@ TEST", `/events/${event.id}/vendors`);
-    console.log(values);
     let eventVendorRef = collection(db, `/events/${event.id}/vendors`);
     await addDoc(eventVendorRef, {
       ...vendor,

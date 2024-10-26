@@ -25,7 +25,7 @@ export function VendorsTable() {
     if (user?.uid) {
       const q = query(
         collection(db, "vendors"),
-        where("userId", "==", user.uid)
+        where("userId", "==", user?.uid)
       );
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const newvendors: IVendor[] = [];
@@ -36,7 +36,7 @@ export function VendorsTable() {
         return () => unsubscribe();
       });
     }
-  }, [user.uid]);
+  }, [user]);
 
   return (
     <div>

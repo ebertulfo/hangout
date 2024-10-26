@@ -1,10 +1,10 @@
 "use client";
-import { useAttendees } from "@/app/_hooks/Attendees";
-import { useTimerTick } from "@/app/_hooks/TimerTick";
-import { useVendor } from "@/app/_hooks/Vendors";
+import { useAttendees } from "@/app/_hooks/attendees";
+import { useTimerTick } from "@/app/_hooks/timerTick";
+import { useVendor } from "@/app/_hooks/vendors";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { db } from "@/lib/firebase/firebase";
-import { IAttendee, IEvent } from "@/types";
+import { IAttendee, IExistingEvent } from "@/types";
 import dayjs from "dayjs";
 import { doc, getDoc } from "firebase/firestore";
 import { useParams } from "next/navigation";
@@ -21,7 +21,7 @@ export default function EventManagement() {
   const { id }: { id: string } = useParams();
   const { attendees } = useAttendees(id);
   const { vendors } = useVendor(id);
-  const [event, setEvent] = useState<IEvent>();
+  const [event, setEvent] = useState<IExistingEvent>();
 
   const [openMeetingAssignmentDialog, setOpenMeetingAssignmentDialog] =
     useState(false);
@@ -36,7 +36,7 @@ export default function EventManagement() {
       const eventDocRef = doc(db, "events", id as string);
       getDoc(eventDocRef).then((docSnap) => {
         if (docSnap.exists()) {
-          const data: IEvent = docSnap.data() as IEvent;
+          const data: IExistingEvent = docSnap.data() as IExistingEvent;
           data.date = dayjs(new Date(data.date)).format("MMMM D, YYYY");
           setEvent({ ...data, id });
         }
