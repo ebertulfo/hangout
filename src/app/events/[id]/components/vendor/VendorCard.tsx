@@ -16,7 +16,6 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { deleteDoc, doc } from "firebase/firestore";
 import { useMemo } from "react";
-import AssignAttendeeDialog from "./AssignAttendeeDialog";
 import EditVendorDialog from "./EditVendorDialog";
 dayjs.extend(utc);
 export default function VendorCard({
@@ -96,11 +95,6 @@ export default function VendorCard({
           <p className="font-bold">
             Slots: {ongoingMeetings.length}/ {vendor.slots}
           </p>
-          <AssignAttendeeDialog
-            disabled={ongoingMeetings.length === vendor.slots}
-            vendor={vendor}
-            eventId={eventId}
-          />
         </div>
         <div className="font-semibold text-gray-600 text-sm">
           Had{" "}

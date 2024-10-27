@@ -61,7 +61,7 @@ export function MeetingManagement({
         eventId={eventId}
       />
       <h1 className=" text-2xl font-semibold mb-5">Meetings</h1>
-      <div className="flex flex-row gap-5">
+      <div className="flex flex-row gap-5 flex-nowrap">
         <UnassignedAttendeesList
           eventId={eventId}
           openMeetingsDialog={handleOpenMeetingAssignemntDialog}
@@ -70,7 +70,7 @@ export function MeetingManagement({
         <QueuedAttendeesList eventId={eventId} vendors={vendors} />
         <ForFollowupList eventId={eventId} />
         <Separator orientation="vertical" />
-        <div>
+        <div className="overflow-x-scroll">
           <h2 className="text-xl font-bold mb-5">Current Meetings and Queue</h2>
           <QueueManagement eventId={eventId} />
         </div>

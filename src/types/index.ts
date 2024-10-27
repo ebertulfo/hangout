@@ -37,7 +37,6 @@ export interface IVendorInEvent {
   eventId: string;
   vendorId: string;
   slots: number;
-  meetings: IVendorInEventMeeting[];
 }
 
 export interface IMeeting {
@@ -47,6 +46,7 @@ export interface IMeeting {
   attendeeIdentifier: string;
   meetingStartedAt: string;
   meetingEndedAt: string | null;
+  buzzerNumber: string;
 }
 
 export interface IExistingMeeting {
@@ -57,6 +57,10 @@ export interface IExistingMeeting {
   attendeeIdentifier: string;
   meetingStartedAt: string;
   meetingEndedAt: string | null;
+  buzzerNumber: string;
+  tenMinuteBuzzed: boolean;
+  fiveMinuteBuzzed: boolean;
+  timeUpBuzzed: boolean;
 }
 export interface IVendor {
   id: string;
@@ -87,5 +91,5 @@ export interface IQueuedAttendee {
   attendee: IAttendee;
   vendorId: string;
   queuedAt: string;
-  buzzerNumber: string | null;
+  buzzerNumber: string;
 }

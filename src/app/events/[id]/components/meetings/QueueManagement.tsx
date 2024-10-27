@@ -6,7 +6,7 @@ export function QueueManagement({ eventId }: { eventId: string }) {
   const { vendors } = useVendor(eventId);
   const { attendees } = useAttendees(eventId);
   return (
-    <div>
+    <div className="flex">
       <div className="flex gap-5">
         {
           // Create a list of vendor slots

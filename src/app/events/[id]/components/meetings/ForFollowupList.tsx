@@ -17,7 +17,7 @@ export function ForFollowupList({ eventId }: { eventId: string }) {
   return (
     <div className="flex-row">
       <h3 className="text-xl font-bold mb-5">For Follow Up</h3>
-      <Card className="w-[400px] space-y-3">
+      <Card className="w-[400px] space-y-4">
         <CardContent className="flex flex-col gap-3">
           {meetingsNeedingFollowUp.length ? (
             meetingsNeedingFollowUp.map((meeting) => {
@@ -104,7 +104,7 @@ export function ForFollowupList({ eventId }: { eventId: string }) {
               );
             })
           ) : (
-            <p className="text-center text-gray-500">
+            <p className="text-center text-gray-500 pt-4">
               Nothing to follow up. Yet.
             </p>
           )}

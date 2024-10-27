@@ -141,31 +141,30 @@ export function QueuedAttendeesList({
       <div className="flex-row space-y-4">
         <h3 className="text-xl font-bold">Queued Attendees</h3>
 
-        {/* Vendor Filter Dropdown */}
-        <div className="mb-4">
-          <label
-            htmlFor="vendorFilter"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Filter by Vendor:
-          </label>
-          <select
-            id="vendorFilter"
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
-            value={selectedVendorFilter}
-            onChange={(e) => setSelectedVendorFilter(e.target.value)}
-          >
-            <option value="all">All Vendors</option>
-            {vendors.map((vendor) => (
-              <option key={vendor.id} value={vendor.id}>
-                {vendor.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
         {/* Check if there are filtered attendees */}
         <Card className="w-[400px] space-y-4">
+          {/* Vendor Filter Dropdown */}
+          <div className="p-4">
+            <label
+              htmlFor="vendorFilter"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Filter by Vendor:
+            </label>
+            <select
+              id="vendorFilter"
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
+              value={selectedVendorFilter}
+              onChange={(e) => setSelectedVendorFilter(e.target.value)}
+            >
+              <option value="all">All Vendors</option>
+              {vendors.map((vendor) => (
+                <option key={vendor.id} value={vendor.id}>
+                  {vendor.name}
+                </option>
+              ))}
+            </select>
+          </div>
           {filteredAttendees.length > 0 ? (
             <CardContent className="flex flex-col gap-4">
               {filteredAttendees.map(({ attendee, vendors }) => (
@@ -213,9 +212,17 @@ export function QueuedAttendeesList({
                                     ? "bg-blue-500 text-white"
                                     : "opacity-60"
                                 }
-                                disabled={!vendorOpenSlots[vendor.id]}
+                                disabled={
+                                  !vendorOpenSlots[vendor.id] && !!buzzerNumber
+                                }
                                 onClick={() =>
-                                  handleAssign(attendee, vendor, buzzerNumber)
+                                  !vendorOpenSlots[vendor.id] && !!buzzerNumber
+                                    ? handleAssign(
+                                        attendee,
+                                        vendor,
+                                        buzzerNumber
+                                      )
+                                    : null
                                 }
                               >
                                 Assign
@@ -236,7 +243,7 @@ export function QueuedAttendeesList({
             </CardContent>
           ) : (
             // Empty message if no attendees are in the queue
-            <p className="text-center text-gray-500 m-4">
+            <p className="text-center text-gray-500 p-4">
               No attendees are currently queued
               {selectedVendorFilter !== "all" &&
                 ` for ${

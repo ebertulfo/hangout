@@ -200,7 +200,7 @@ export function UnassignedAttendeesList({
           <p>
             Are you sure you want to mark{" "}
             <span className="font-semibold">{selectedAttendee?.name}</span> as
-            "Left the event"?
+            &quot;Left the event&quot;?
           </p>
           <DialogFooter>
             <Button
