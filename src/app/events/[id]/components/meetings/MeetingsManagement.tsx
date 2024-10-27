@@ -7,6 +7,7 @@ import { useState } from "react";
 import { ForFollowupList } from "./ForFollowupList";
 import { MeetingAssignmentDialog } from "./MeetingAssignmentDialog";
 import { QueueAttendeeDialog } from "./QueueAttendeeDialog";
+import { QueuedAttendeesList } from "./QueuedAttendeesList";
 import { QueueManagement } from "./QueueManagement";
 import { UnassignedAttendeesList } from "./UnassignedAttendeesList";
 
@@ -66,6 +67,7 @@ export function MeetingManagement({
           openMeetingsDialog={handleOpenMeetingAssignemntDialog}
           openQueueDialog={handleOpenQueueDialog}
         />
+        <QueuedAttendeesList eventId={eventId} vendors={vendors} />
         <ForFollowupList eventId={eventId} />
         <Separator orientation="vertical" />
         <div>

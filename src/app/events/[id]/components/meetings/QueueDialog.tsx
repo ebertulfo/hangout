@@ -37,7 +37,7 @@ export function MeetingAssignmentDialog({
   );
 
   const { assignAttendee } = useMeetings(eventId);
-  const { queue, add } = useQueue(eventId);
+  const { queue, queueAttendee } = useQueue(eventId);
 
   const assignToVendor = async (
     vendor: IVendorInEvent,
@@ -50,7 +50,7 @@ export function MeetingAssignmentDialog({
         .length >= vendor.slots
     ) {
       // If vendor has no available slots, add attendee to queue
-      add(attendee.id, attendee.name, attendee.identifier, vendor.id);
+      queueAttendee(attendee, vendor.id);
     }
     await assignAttendee(vendor, attendee);
     handleClose();
@@ -107,9 +107,9 @@ export function MeetingAssignmentDialog({
                           meeting.attendeeId === attendee?.id &&
                           meeting.meetingEndedAt !== null
                       ) ||
-                      queue.find(
+                      !!queue.find(
                         (q) =>
-                          q.attendeeId === attendee?.id &&
+                          q.attendee.id === attendee?.id &&
                           q.vendorId === vendor?.id
                       )
                     }
@@ -142,14 +142,7 @@ export function MeetingAssignmentDialog({
             <>
               <p>All vendor&apos;s slots currently occupied</p>
               <Button
-                onClick={() =>
-                  add(
-                    attendee.id,
-                    attendee.name,
-                    attendee.identifier,
-                    selectedVendor.id
-                  )
-                }
+                onClick={() => queueAttendee(attendee, selectedVendor.id)}
               >
                 Queue for {selectedVendor?.name}
               </Button>

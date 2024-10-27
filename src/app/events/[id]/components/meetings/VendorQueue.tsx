@@ -94,8 +94,8 @@ export function VendorQueue({
                   <Card key={queuedAttendee.id}>
                     <CardHeader>
                       <CardTitle>
-                        {queuedAttendee.attendeeIdentifier} -{" "}
-                        {queuedAttendee.attendeeName}
+                        {queuedAttendee.attendee.identifier} -{" "}
+                        {queuedAttendee.attendee.name}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-2">
@@ -105,7 +105,11 @@ export function VendorQueue({
                       </div>
                       <Button
                         onClick={() => {
-                          assignAttendee(vendor, queuedAttendee);
+                          assignAttendee(
+                            vendor,
+                            queuedAttendee.attendee,
+                            queuedAttendee.buzzerNumber
+                          );
                         }}
                       >
                         Assign

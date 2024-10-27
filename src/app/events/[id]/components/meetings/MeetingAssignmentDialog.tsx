@@ -9,7 +9,6 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-
 import {
   Popover,
   PopoverContent,
@@ -19,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { IAttendee, IVendorInEvent } from "@/types";
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 import { useState } from "react";
+
 export function MeetingAssignmentDialog({
   isOpen,
   handleClose,
@@ -35,6 +35,7 @@ export function MeetingAssignmentDialog({
   const [selectedVendor, setSelectedVendor] = useState<IVendorInEvent | null>(
     null
   );
+  const [buzzerNumber, setBuzzerNumber] = useState(""); // New state for buzzer number
 
   const { meetings, assignAttendee } = useMeetings(eventId);
   const { queue, queueAttendee } = useQueue(eventId);
@@ -43,9 +44,9 @@ export function MeetingAssignmentDialog({
     vendor: IVendorInEvent,
     attendee: IAttendee
   ) => {
-    // Check if vendor has available slots
-    await assignAttendee(vendor, attendee);
+    await assignAttendee(vendor, attendee, buzzerNumber); // Pass buzzer number
     setSelectedVendor(null);
+    setBuzzerNumber(""); // Reset buzzer number after assignment
     handleClose();
   };
 
@@ -87,70 +88,67 @@ export function MeetingAssignmentDialog({
               <CommandInput placeholder="Search vendors..." className="h-9" />
               <CommandEmpty>No vendors found.</CommandEmpty>
               <CommandGroup>
-                {vendors.map((vendor) => (
-                  <CommandItem
-                    value={vendor.id}
-                    key={vendor.id}
-                    onSelect={() => {
-                      setSelectedVendor(vendor);
-                    }}
-                    disabled={
-                      !!meetings.find(
-                        (meeting) =>
-                          meeting.attendeeId === attendee?.id &&
-                          (meeting.meetingEndedAt !== null ||
-                            meeting.vendorId === vendor.id)
-                      ) ||
-                      !!queue.find(
-                        (q) =>
-                          q.attendeeId === attendee?.id &&
-                          q.vendorId === vendor?.id
-                      )
-                    }
-                  >
-                    {vendor.name}
-                    <CheckIcon
-                      className={cn(
-                        "ml-auto h-4 w-4",
-                        vendor.id === selectedVendor?.id
-                          ? "opacity-100"
-                          : "opacity-0"
-                      )}
-                    />
-                  </CommandItem>
-                ))}
+                {vendors.map((vendor) => {
+                  // Check if the attendee has already met the vendor
+                  const hasMetVendor = meetings.some(
+                    (meeting) =>
+                      meeting.attendeeId === attendee?.id &&
+                      meeting.vendorId === vendor.id &&
+                      meeting.meetingEndedAt !== null // Past meeting
+                  );
+
+                  // Check if the attendee is queued for the vendor
+                  const isQueuedWithVendor = queue.some(
+                    (q) =>
+                      q.attendee.id === attendee?.id && q.vendorId === vendor.id
+                  );
+
+                  return (
+                    <CommandItem
+                      value={vendor.id}
+                      key={vendor.id}
+                      onSelect={() => {
+                        setSelectedVendor(vendor);
+                      }}
+                      disabled={hasMetVendor || isQueuedWithVendor} // Disable if already met or queued
+                    >
+                      {vendor.name}
+                      <CheckIcon
+                        className={cn(
+                          "ml-auto h-4 w-4",
+                          vendor.id === selectedVendor?.id
+                            ? "opacity-100"
+                            : "opacity-0"
+                        )}
+                      />
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             </Command>
           </PopoverContent>
         </Popover>
-        {selectedVendor &&
-          (meetings.filter(
-            (meeting) =>
-              meeting.meetingEndedAt === null &&
-              meeting.vendorId === selectedVendor.id
-          ).length < selectedVendor.slots ? (
-            <>
-              <Button onClick={() => assignToVendor(selectedVendor, attendee)}>
-                Assign to {selectedVendor?.name}
-              </Button>
-            </>
-          ) : (
-            <>
-              <p>All vendor&apos;s slots currently occupied</p>
-              <Button
-                onClick={() =>
-                  queueAttendee(
-                    attendee.id,
-                    attendee.name,
-                    attendee.identifier,
-                    selectedVendor.id
-                  )
-                }
-              >
-                Queue for {selectedVendor?.name}
-              </Button>
-            </>
-          ))}
+        {selectedVendor && (
+          <>
+            {/* Buzzer Number Input */}
+            <label className="block mt-4">
+              <span className="text-sm">Buzzer Number</span>
+              <input
+                type="text"
+                value={buzzerNumber}
+                onChange={(e) => setBuzzerNumber(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                placeholder="Enter buzzer number"
+              />
+            </label>
+            <Button
+              onClick={() => assignToVendor(selectedVendor, attendee)}
+              disabled={!buzzerNumber}
+            >
+              Assign with Buzzer
+            </Button>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

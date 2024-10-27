@@ -1,8 +1,9 @@
+import { useMeetings } from "@/app/_hooks/meetings";
 import { useQueue } from "@/app/_hooks/queue";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { IAttendee, IVendorInEvent } from "@/types";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 export function QueueAttendeeDialog({
   isOpen,
@@ -20,7 +21,43 @@ export function QueueAttendeeDialog({
   const [selectedVendors, setSelectedVendors] = useState<Set<string>>(
     new Set()
   );
+  const [buzzerNumber, setBuzzerNumber] = useState(""); // New state for buzzer number
   const { queue, queueAttendee, dequeueAttendee } = useQueue(eventId);
+  const { meetings } = useMeetings(eventId);
+
+  // Memoize vendor statuses
+  const vendorStatuses = useMemo(() => {
+    if (!attendee) return {};
+    const status: Record<string, string> = {};
+    vendors.forEach((vendor) => {
+      const isQueued = queue.some(
+        (q) => q.attendee.id === attendee.id && q.vendorId === vendor.id
+      );
+      const isInMeeting = meetings.some(
+        (meeting) =>
+          meeting.attendeeId === attendee.id &&
+          meeting.vendorId === vendor.id &&
+          !meeting.meetingEndedAt
+      );
+      const hasMetBefore = meetings.some(
+        (meeting) =>
+          meeting.attendeeId === attendee.id &&
+          meeting.vendorId === vendor.id &&
+          meeting.meetingEndedAt
+      );
+
+      if (hasMetBefore) {
+        status[vendor.id] = "Already met";
+      } else if (isInMeeting) {
+        status[vendor.id] = "In meeting";
+      } else if (isQueued) {
+        status[vendor.id] = "Already queued";
+      } else {
+        status[vendor.id] = "Available";
+      }
+    });
+    return status;
+  }, [attendee, queue, meetings, vendors]);
 
   if (!attendee) {
     return null; // Return early if no attendee data is available
@@ -40,9 +77,10 @@ export function QueueAttendeeDialog({
 
   const queueSelectedVendors = () => {
     selectedVendors.forEach((vendorId) => {
-      queueAttendee(attendee.id, attendee.name, attendee.identifier, vendorId);
+      queueAttendee(attendee, vendorId, buzzerNumber); // Pass buzzer number
     });
     setSelectedVendors(new Set());
+    setBuzzerNumber(""); // Reset buzzer number after queuing
     handleClose();
   };
 
@@ -56,6 +94,7 @@ export function QueueAttendeeDialog({
       onOpenChange={() => {
         handleClose();
         setSelectedVendors(new Set());
+        setBuzzerNumber(""); // Reset buzzer number when closing
       }}
     >
       <DialogContent>
@@ -69,9 +108,8 @@ export function QueueAttendeeDialog({
         <div className="mb-4">
           <p>Select vendors to add to queue:</p>
           {vendors.map((vendor) => {
-            const isQueued = !!queue.find(
-              (q) => q.attendeeId === attendee.id && q.vendorId === vendor.id
-            );
+            const status = vendorStatuses[vendor.id];
+            const isAvailable = status === "Available";
             const isSelected = selectedVendors.has(vendor.id);
 
             return (
@@ -80,17 +118,35 @@ export function QueueAttendeeDialog({
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => toggleVendorSelection(vendor.id)}
-                  disabled={isQueued}
+                  disabled={!isAvailable}
                 />
                 <span className="ml-2">
-                  {vendor.name} {isQueued ? "(Already queued)" : ""}
+                  {vendor.name}{" "}
+                  {!isAvailable && (
+                    <span className="text-sm text-gray-500">({status})</span>
+                  )}
                 </span>
               </label>
             );
           })}
         </div>
 
-        <Button onClick={queueSelectedVendors} disabled={!selectedVendors.size}>
+        {/* Buzzer Number Input */}
+        <label className="block mt-4">
+          <span className="text-sm">Buzzer Number</span>
+          <input
+            type="text"
+            value={buzzerNumber}
+            onChange={(e) => setBuzzerNumber(e.target.value)}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+            placeholder="Enter buzzer number"
+          />
+        </label>
+
+        <Button
+          onClick={queueSelectedVendors}
+          disabled={!selectedVendors.size || !buzzerNumber}
+        >
           Queue Selected Vendors
         </Button>
 
@@ -99,7 +155,7 @@ export function QueueAttendeeDialog({
           {queue.length ? (
             <ul>
               {queue
-                .filter((q) => q.attendeeId === attendee.id)
+                .filter((q) => q.attendee.id === attendee.id)
                 .map((queuedItem) => {
                   const vendor = vendors.find(
                     (v) => v.id === queuedItem.vendorId

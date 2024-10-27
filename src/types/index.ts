@@ -84,9 +84,8 @@ export interface IAttendee {
 export interface IQueuedAttendee {
   id: string;
   eventId: string;
-  attendeeIdentifier: string;
-  attendeeId: string;
-  attendeeName: string;
+  attendee: IAttendee;
   vendorId: string;
   queuedAt: string;
+  buzzerNumber: string | null;
 }

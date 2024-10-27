@@ -1,6 +1,6 @@
 import { useToast } from "@/components/ui/use-toast";
 import { db } from "@/lib/firebase/firebase";
-import { IQueuedAttendee } from "@/types";
+import { IAttendee, IQueuedAttendee } from "@/types";
 import {
   addDoc,
   collection,
@@ -35,24 +35,24 @@ export function useQueue(eventId: string) {
   }, [eventId]);
 
   const queueAttendee = async (
-    attendeeId: string,
-    attendeeName: string,
-    attendeeIdentifier: string,
-    vendorId: string
+    attendee: IAttendee,
+    vendorId: string,
+    buzzerNumber: string
   ) => {
     const attendeeQueue = {
-      attendeeId,
-      attendeeName,
-      attendeeIdentifier,
+      attendee,
       vendorId,
       eventId,
+      buzzerNumber: buzzerNumber,
       queuedAt: new Date().toISOString(),
     };
     try {
       // Check if attendee is already in a meeting. Doesn't matter which vendor, they can't be in a meeting and in the queue at the same time
       const attendeeInMeeting = meetings.find(
-        (meeting) => meeting.attendeeId === attendeeId && meeting.meetingEndedAt
+        (meeting) =>
+          meeting.attendeeId === attendee.id && !meeting.meetingEndedAt
       );
+      console.log("Attendee in meeting", attendeeInMeeting);
       if (attendeeInMeeting) {
         toast({
           title: "Attendee is already in a meeting",
@@ -63,7 +63,7 @@ export function useQueue(eventId: string) {
       // Check if the attendee is already in the queue for the same vendor
       const attendeeInQueue = queue.find(
         (attendee) =>
-          attendee.attendeeId === attendeeId && attendee.vendorId === vendorId
+          attendee.attendee.id === attendee.id && attendee.vendorId === vendorId
       );
       if (attendeeInQueue) {
         toast({
@@ -74,7 +74,7 @@ export function useQueue(eventId: string) {
       }
       await addDoc(collection(db, `/events/${eventId}/queue`), attendeeQueue);
       toast({
-        title: "Attendee queued",
+        title: `Attendee queued with buzzer ${buzzerNumber}`,
       });
     } catch (error) {
       toast({
@@ -83,8 +83,25 @@ export function useQueue(eventId: string) {
     }
   };
 
-  const dequeueAttendee = async (attendeeId: string) => {
+  const dequeueAttendee = async (attendeeId: string, vendorId?: string) => {
     // Implement this function to remove an attendee from the queue
+    if (vendorId) {
+      const attendeeInQueue = queue.find(
+        (attendee) =>
+          attendee.attendee.id === attendeeId && attendee.vendorId === vendorId
+      );
+      if (!attendeeInQueue) {
+        toast({
+          title: "Attendee not in queue for this vendor",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      return await deleteDoc(
+        doc(db, `/events/${eventId}/queue/${attendeeInQueue.id}`)
+      );
+    }
     return await deleteDoc(doc(db, `/events/${eventId}/queue/${attendeeId}`));
   };
 
