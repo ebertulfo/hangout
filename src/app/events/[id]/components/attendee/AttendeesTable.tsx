@@ -1,5 +1,7 @@
 "use client";
 
+import { useVendor } from "@/app/_hooks/vendors";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -20,8 +22,16 @@ export function AttendeesTable({
   eventId: string;
   attendees: IAttendee[];
 }) {
+  const { vendors } = useVendor(eventId);
   const [selectedAttendee, setSelectedAttendee] = useState<IAttendee>();
   const [openAttendeeDetails, setOpenAttendeeDetails] = useState(false);
+
+  // Map vendor IDs to names for quick lookup
+  const vendorNameById = vendors.reduce((map, vendor) => {
+    map[vendor.id] = vendor.name;
+    return map;
+  }, {} as Record<string, string>);
+
   return (
     <Table>
       <TableCaption>A list of attendees</TableCaption>
@@ -32,27 +42,36 @@ export function AttendeesTable({
           <TableHead>Phone Number</TableHead>
           <TableHead>Email</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead></TableHead>
+          <TableHead>Preferred Vendors</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {attendees &&
-          attendees.map((attendee: IAttendee) => (
-            <TableRow
-              key={attendee.id}
-              onClick={() => {
-                console.log(attendee);
-                setSelectedAttendee(attendee);
-                setOpenAttendeeDetails(true);
-              }}
-            >
-              <TableCell>{attendee.identifier}</TableCell>
-              <TableCell>{attendee.name}</TableCell>
-              <TableCell>{attendee.phoneNumber}</TableCell>
-              <TableCell>{attendee.email}</TableCell>
-              <TableCell>{attendee.status}</TableCell>
-            </TableRow>
-          ))}
+        {attendees.map((attendee) => (
+          <TableRow
+            key={attendee.id}
+            onClick={() => {
+              setSelectedAttendee(attendee);
+              setOpenAttendeeDetails(true);
+            }}
+          >
+            <TableCell>{attendee.identifier}</TableCell>
+            <TableCell>{attendee.name}</TableCell>
+            <TableCell>{attendee.phoneNumber}</TableCell>
+            <TableCell>{attendee.email}</TableCell>
+            <TableCell>{attendee.status}</TableCell>
+            <TableCell>
+              {attendee.preferredVendors?.length ? (
+                attendee.preferredVendors.map((vendorId) => (
+                  <Badge key={vendorId} className="mr-1">
+                    {vendorNameById[vendorId] || "Unknown"}
+                  </Badge>
+                ))
+              ) : (
+                <span>No preferences</span>
+              )}
+            </TableCell>
+          </TableRow>
+        ))}
       </TableBody>
       {selectedAttendee ? (
         <AttendeeDetailsDialog

@@ -81,8 +81,9 @@ export interface IAttendee {
   eventId: string;
   currentMeetingVendorId: string;
   currentMeetingStartedAt: string;
-  status: "unassigned" | "waiting" | "in meeting";
+  status: "unassigned" | "waiting" | "in meeting" | "left";
   metVendorIds: string[];
+  preferredVendors?: string[];
 }
 
 export interface IQueuedAttendee {

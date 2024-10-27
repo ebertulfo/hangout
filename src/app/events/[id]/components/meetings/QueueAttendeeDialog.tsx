@@ -3,6 +3,7 @@ import { useQueue } from "@/app/_hooks/queue";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { IAttendee, IVendorInEvent } from "@/types";
+import { StarIcon } from "@radix-ui/react-icons";
 import { useMemo, useState } from "react";
 
 export function QueueAttendeeDialog({
@@ -111,6 +112,7 @@ export function QueueAttendeeDialog({
             const status = vendorStatuses[vendor.id];
             const isAvailable = status === "Available";
             const isSelected = selectedVendors.has(vendor.id);
+            const isPreferred = attendee.preferredVendors?.includes(vendor.id);
 
             return (
               <label key={vendor.id} className="flex items-center my-1">
@@ -122,6 +124,9 @@ export function QueueAttendeeDialog({
                 />
                 <span className="ml-2">
                   {vendor.name}{" "}
+                  {isPreferred && (
+                    <StarIcon className="text-yellow-500 ml-1 inline-block" />
+                  )}
                   {!isAvailable && (
                     <span className="text-sm text-gray-500">({status})</span>
                   )}

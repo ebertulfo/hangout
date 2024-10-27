@@ -22,6 +22,8 @@ import { z } from "zod";
 import { AuthContext } from "@/app/_contexts/AuthContext";
 import { useAttendees } from "@/app/_hooks/attendees";
 import { useRSVPs } from "@/app/_hooks/rsvps";
+import { useVendor } from "@/app/_hooks/vendors";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Command,
   CommandEmpty,
@@ -45,6 +47,7 @@ const formSchema = z.object({
   phoneNumber: z.string(),
   email: z.string().email(),
   rsvpId: z.string(),
+  preferredVendors: z.array(z.string()),
 });
 
 export default function AddAttendeeDialog({
@@ -56,11 +59,12 @@ export default function AddAttendeeDialog({
 }) {
   const { createAttendee } = useAttendees(eventId);
   const { rsvps, updateRSVP } = useRSVPs(eventId);
+  const { vendors } = useVendor(eventId);
 
   const [selectedRsvp, setSelectedRsvp] = useState<IRsvp>();
   const [openDialog, setOpenDialog] = useState(false);
   const user = useContext(AuthContext);
-  // 1. Define your form.
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -68,6 +72,7 @@ export default function AddAttendeeDialog({
       name: "",
       phoneNumber: "",
       email: "",
+      preferredVendors: [],
     },
   });
   // 2. Define a submit handler.
@@ -75,14 +80,16 @@ export default function AddAttendeeDialog({
     try {
       await createAttendee({
         ...values,
-        identifier: `HO${attendeesCount < 10 && "0"}${attendeesCount + 1}`,
+        identifier: `HO${attendeesCount + 1 < 10 ? "0" : 0}${
+          attendeesCount + 1
+        }`,
       });
       form.reset();
       setOpenDialog(false);
     } catch (error) {}
 
     if (selectedRsvp) {
-      await updateRSVP(selectedRsvp.id, { attended: true });
+      await (selectedRsvp.id, { attended: true });
     }
 
     form.reset();
@@ -259,7 +266,35 @@ export default function AddAttendeeDialog({
                   </FormItem>
                 )}
               />
-
+              <FormField
+                control={form.control}
+                name="preferredVendors"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Preferred Vendors</FormLabel>
+                    <FormDescription>
+                      Select vendors the attendee is interested in meeting.
+                    </FormDescription>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {vendors.map((vendor) => (
+                        <div key={vendor.id} className="flex items-center">
+                          <Checkbox
+                            checked={field.value?.includes(vendor.id)}
+                            onCheckedChange={(checked) => {
+                              const newPreferred = checked
+                                ? [...(field.value || []), vendor.id]
+                                : field.value?.filter((id) => id !== vendor.id);
+                              field.onChange(newPreferred);
+                            }}
+                          />
+                          <span className="ml-2">{vendor.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <Button type="submit">Register Attendee</Button>
             </form>
           </Form>

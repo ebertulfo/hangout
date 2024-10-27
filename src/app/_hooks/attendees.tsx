@@ -1,3 +1,5 @@
+// Updated useAttendees Hook with preferredVendors support
+
 import { useToast } from "@/components/ui/use-toast";
 import { db } from "@/lib/firebase/firebase";
 import { IAttendee } from "@/types";
@@ -13,8 +15,9 @@ import { useEffect, useState } from "react";
 export function useAttendees(eventId: string) {
   const [attendees, setAttendees] = useState<IAttendee[]>([]);
   const { toast } = useToast();
+
   useEffect(() => {
-    // Create realtime connection for the event's attendees
+    // Real-time connection for the event's attendees
     const unsubAttendees = onSnapshot(
       collection(db, "events", eventId as string, "attendees"),
       (snapshot) => {
@@ -31,18 +34,22 @@ export function useAttendees(eventId: string) {
     };
   }, [eventId]);
 
-  const createAttendee = async (values: object) => {
+  const createAttendee = async (values: Partial<IAttendee>) => {
     let attendeeRef = collection(db, `/events/${eventId}/attendees`);
     await addDoc(attendeeRef, {
       ...values,
       status: "unassigned",
+      preferredVendors: values.preferredVendors || [], // Default to empty array if not provided
     });
     toast({
       title: "Attendee Registered",
     });
   };
 
-  const updateAttendee = async (attendeeId: string, values: object) => {
+  const updateAttendee = async (
+    attendeeId: string,
+    values: Partial<IAttendee>
+  ) => {
     let attendeeRef = doc(db, `/events/${eventId}/attendees/${attendeeId}`);
     await updateDoc(attendeeRef, {
       ...values,

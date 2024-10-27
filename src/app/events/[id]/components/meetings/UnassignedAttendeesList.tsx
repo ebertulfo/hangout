@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { IAttendee } from "@/types";
+import { StarIcon } from "@radix-ui/react-icons"; // Add a star icon to represent preferred
 import { useMemo, useState } from "react";
 
 export function UnassignedAttendeesList({
@@ -37,7 +38,6 @@ export function UnassignedAttendeesList({
   const [unassignedAttendeesSearch, setUnassignedAttendeesSearch] =
     useState("");
 
-  // State for confirmation dialog
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedAttendee, setSelectedAttendee] = useState<IAttendee | null>(
     null
@@ -79,12 +79,12 @@ export function UnassignedAttendeesList({
 
   const markAsLeft = async (attendeeId: string) => {
     await updateAttendee(attendeeId, { status: "left" });
-    setConfirmDialogOpen(false); // Close dialog after marking as left
+    setConfirmDialogOpen(false);
   };
 
   const handleMarkAsLeftClick = (attendee: IAttendee) => {
     setSelectedAttendee(attendee);
-    setConfirmDialogOpen(true); // Open confirmation dialog
+    setConfirmDialogOpen(true);
   };
 
   const filteredAttendees = attendees.filter(
@@ -132,6 +132,7 @@ export function UnassignedAttendeesList({
                   )}
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-2">
+                  {/* Met Vendors */}
                   <div className="text-sm text-gray-600">
                     Met:{" "}
                     <div className="flex flex-wrap gap-1">
@@ -140,7 +141,12 @@ export function UnassignedAttendeesList({
                           .filter((vendorId) => vendorNameById[vendorId])
                           .map((vendorId) => (
                             <Badge key={vendorId}>
-                              {vendorNameById[vendorId]}
+                              {vendorNameById[vendorId]}{" "}
+                              {attendee.preferredVendors?.includes(
+                                vendorId
+                              ) && (
+                                <StarIcon className="ml-1 text-yellow-500 inline-block" />
+                              )}
                             </Badge>
                           ))
                       ) : (
@@ -148,6 +154,8 @@ export function UnassignedAttendeesList({
                       )}
                     </div>
                   </div>
+
+                  {/* Unmet Vendors */}
                   <div className="text-sm text-gray-600">
                     Unmet:{" "}
                     <div className="flex flex-wrap gap-1">
@@ -158,7 +166,10 @@ export function UnassignedAttendeesList({
                             variant="outline"
                             className="mr-1"
                           >
-                            {vendor.name}
+                            {vendor.name}{" "}
+                            {attendee.preferredVendors?.includes(vendor.id) && (
+                              <StarIcon className="ml-1 text-yellow-500 inline-block" />
+                            )}
                           </Badge>
                         ))
                       ) : (

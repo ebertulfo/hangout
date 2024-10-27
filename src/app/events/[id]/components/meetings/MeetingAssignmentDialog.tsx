@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { IAttendee, IVendorInEvent } from "@/types";
-import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
+import { CaretSortIcon, CheckIcon, StarIcon } from "@radix-ui/react-icons";
 import { useState } from "react";
 
 export function MeetingAssignmentDialog({
@@ -103,6 +103,10 @@ export function MeetingAssignmentDialog({
                       q.attendee.id === attendee?.id && q.vendorId === vendor.id
                   );
 
+                  const isPreferred = attendee?.preferredVendors?.includes(
+                    vendor.id
+                  );
+
                   return (
                     <CommandItem
                       value={vendor.id}
@@ -113,6 +117,9 @@ export function MeetingAssignmentDialog({
                       disabled={hasMetVendor || isQueuedWithVendor} // Disable if already met or queued
                     >
                       {vendor.name}
+                      {isPreferred && (
+                        <StarIcon className="ml-2 text-yellow-500 inline-block" />
+                      )}
                       <CheckIcon
                         className={cn(
                           "ml-auto h-4 w-4",

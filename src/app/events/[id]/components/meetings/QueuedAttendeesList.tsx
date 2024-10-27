@@ -94,6 +94,7 @@ export function QueuedAttendeesList({
     buzzerNumber: string,
     isOverride = false
   ) => {
+    console.log("@@@ SOKPA");
     const attendeeIsFirstInLine = queueByAttendee[attendee.id].vendors.some(
       (v) => v.vendor.id === vendor.id && v.position === 1
     );
@@ -213,10 +214,10 @@ export function QueuedAttendeesList({
                                     : "opacity-60"
                                 }
                                 disabled={
-                                  !vendorOpenSlots[vendor.id] && !!buzzerNumber
+                                  !vendorOpenSlots[vendor.id] && !buzzerNumber
                                 }
                                 onClick={() =>
-                                  !vendorOpenSlots[vendor.id] && !!buzzerNumber
+                                  vendorOpenSlots[vendor.id] && !!buzzerNumber
                                     ? handleAssign(
                                         attendee,
                                         vendor,
